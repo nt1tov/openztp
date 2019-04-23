@@ -1,0 +1,26 @@
+#!/bin/sh
+siaddr=`env | awk -F= '/siaddr/{print $2}'`
+boot_file=`env | awk  -F= '/boot_file/{print $2}'`
+interface_env=`env | awk  -F= '/INTERFACE/{print $2}'`
+interface=`uci show network.lan.ifname | awk  -F= '//{print $2}' | sed "s/\'//g"`
+make_config() {
+	conf='/etc/register.conf'
+	if [ $boot_file = 'this_is_update_server' ]; 
+	then
+		echo "siaddr=$siaddr" > $conf
+		echo "boot_file=$boot_file" >> $conf
+	fi;
+}
+register_self() {
+	if [ $boot_file = 'this_is_update_server' ]; 
+	then
+		env > /etc/udhcpc_env.txt
+		release=`awk -F= '/DISTRIB_RELEASE/{print $2}' /etc/openwrt_release | sed "s/\'//g"`
+		mac=`cat /sys/class/net/$interface/address`
+		hostname=`uci show system.@system[0].hostname | cut -d'=' -f2 | sed "s/\'//g"`
+		wget -q http://$siaddr:5000/register -O - --post-data="hostname=$hostname&release=$release&mac=$mac"
+	fi;
+}
+register_self
+make_config 
+exit 0
