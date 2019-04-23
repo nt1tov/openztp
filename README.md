@@ -1,2 +1,2 @@
-# openztp
+# OpenZTP
 OpenZTP server to automatic provision OpenWRT devices
